@@ -24,7 +24,7 @@
 
 	<header class="caption">
 		<h1>Genomics in R by Examples</h1>
-		<p><a href="https://blog.liang2.tw">Liang-Bo Wang</a>, 2019-03.</p>
+		<p><a href="https://blog.liang2.tw">Liang-Bo Wang</a>, 2019-03-27.</p>
 	</header>
 
 	<!-- Cover Slide -->
@@ -59,7 +59,7 @@
 				position: absolute;
 			}
 			#talk-author a {
-				color: #FFFA20;
+				color: #FCB100;
 			}
 			#usage-instr {
 				position: absolute;
@@ -73,6 +73,73 @@
 			#usage-instr kbd {
 				color: #606060;
 				background-color: white;
+			}
+		</style>
+	</section>
+
+	<!-- TOC
+	- Examples:
+		- Conversion from ENST/ENSG/ENSP to the gene symbol and their location
+			- TxDb; ensembldb
+			- GRanges/GRangesList
+			- Seqinfo
+		- Find coverage (sequencing depth) of a gene
+			- GRanages operation
+			- gtrellis
+		- Gene expression / CNV of the whole cohort
+			- SummarizedExperiment
+			- Using airway dataset as demo
+			- TCGAbiolinks for all harmonized and legacy TCGA data
+	- R ecosystem for genomic analysis
+	Example DNA WXS BAM
+	- chr22: CHEK2 SOX10 EP300 XRCC6 BCR
+	-->
+
+	<section id="r-setup" class="slide">
+		<h2>R setup</h2>
+		<pre class="lang-r">
+<code>install.packages(c(
+	"tidyverse",   # dplyr, ggplot2, tibble, stringr, ...
+	"BiocManager"  # Bioconductor installer
+))
+BiocManger::install(c(
+	"ensembldb", "gtrellis", "TCGAbiolinks"
+))</code>
+		</pre>
+	</section>
+
+	<section class="slide">
+	  <pre class="lang-r">
+<code>barcodes <- primary_tumors_tbl$barcode
+meth_status_tbl <- primary_tumors_tbl %>%
+    select(barcode,
+	      MGMT_promoter = subtype_MGMT.promoter.status)
+# Subset the gene expression assay
+mgmt_exp_tbl <- assay(gene_exp_se[mgmt_gene_id, barcodes]) %>%
+    as_tibble() %>%
+    gather(barcode, fpkm_uq) %>%
+    left_join(meth_status_tbl, by = 'barcode')</code>
+		</pre>
+	</section>
+
+	<section class="slide tight">
+		<h2>Plot MGMT gene expression and its promoter DNA methylation</h2>
+		<pre class="lang-r">
+<code>ggplot(mgmt_exp_tbl,
+       aes(x = MGMT_promoter, y = fpkm_uq,
+           fill = MGMT_promoter)) +
+    scale_y_log10(labels = scales::comma) +
+    geom_violin(draw_quantiles = .50) +
+    geom_quasirandom() +  # Require ggbeeswarm package
+	theme_bw()</code>
+		</pre>
+	</section>
+
+	<section id="gbm-mgmt-fig" class="slide">
+		<img class="place c" src="pictures/mgmt_promoter.png" alt="">
+		<style>
+			#gbm-mgmt-fig img {
+				height: 95%;
 			}
 		</style>
 	</section>
@@ -95,6 +162,18 @@
 		</style>
 	</section>
 
+	<!-- Section: Additional readings -->
+	<section class="slide">
+		<h2>Additional readings</h2>
+		<ul>
+			<li><a href="https://www.bioconductor.org/packages/release/workflows/vignettes/annotation/inst/doc/Annotation_Resources.html">Bioconductor Annotation Workflow</a> covers AnnotationHub, OrgDb, TxDb, BSgenome and biomaRt</li>
+			<li><a href="https://blog.liang2.tw/posts/2015/12/biocondutor-genomic-data/">My post</a> and <a href="https://blog.liang2.tw/2016Talk-Genomics-in-R/#">my slides</a> about the Bioconductor ecosystem in general</li>
+			<li><a href="https://blog.liang2.tw/posts/2016/05/biocondutor-ensembl-reference/">My another post</a> focusing on Ensembl annotations</li>
+			<li><a href="https://genomicsclass.github.io/book/">PH525x series - Biomedical Data Science</a></li>
+			<li><a href="https://kasperdanielhansen.github.io/genbioconductor/">Bioconductor for Genomic Data Science</a></li>
+		</ul>
+	</section>
+
 	<!-- About me -->
 	<section id="about-me" class="slide clear">
 		<div class="columns two">
@@ -102,7 +181,7 @@
 				<h2>About Me</h2>
 				<ul>
 					<li>Liang-Bo Wang</li>
-					<li>Computational and Systems Biobiology PhD student at Washington University in St. Louis (WashU; WUSTL)</li>
+					<li>Computational and Systems Biology PhD student at Washington University in St. Louis (WashU; WUSTL)</li>
 					<li>Advisor: <a href="https://dinglab.wustl.edu/">Li Ding</a></li>
 					<li>Research interest: cancer genomics, proteomics, single cell imaging</li>
 				</ul>
@@ -140,8 +219,12 @@
 	-->
 	<script>
 		document.addEventListener('DOMContentLoaded', (event) => {
+			// Convert tab to be 4 space in the code examples
+			hljs.configure({
+				tabReplace: '    '
+			});
 			// Highlight only the code blocks with specified language
-			document.querySelectorAll('pre[class^="language"] code').forEach((block) => {
+			document.querySelectorAll('pre[class^="lang"] code').forEach((block) => {
 				hljs.highlightBlock(block);
 			});
 
