@@ -59,6 +59,13 @@ img.fill.h {
     padding-top: 52px;
 }
 
+pre.small {
+    font-size: 1rem;
+}
+
+pre.small code {
+    line-height: 1.5em;
+}
 
 /* Custom column width */
 

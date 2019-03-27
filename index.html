@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<title>Genomics in R: Case Studies</title>
+	<title>Genomics in R by examples</title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="lib/highlight/styles/github.css" type="text/css"/>
@@ -18,7 +18,7 @@
 	<meta name="twitter:creator" content="@ccwang002">
 	<meta name="twitter:title" content="Genomics in R by Examples">
 	<meta name="twitter:description" content="Showcase the R/Bioconductor ecosystem for genomic analysis">
-	<!--<meta name="twitter:image" content="https://blog.liang2.tw/2016Talk-Genomics-in-R/pics/modPlot_GAPDH.png">-->
+	<meta name="twitter:image" content="https://blog.liang2.tw/2019Talk-Genomics-in-R/pictures/cover.jpg">
 </head>
 <body class="shower list">
 
@@ -79,8 +79,9 @@
 
 	<!-- TOC
 	- Examples:
-		- Conversion from ENST/ENSG/ENSP to the gene symbol and their location
+		- Conversion from ENST/ENSG/ENSP to the gene symbol
 			- TxDb; ensembldb
+		- Extract the genomic location of a given gene
 			- GRanges/GRangesList
 			- Seqinfo
 		- Find coverage (sequencing depth) of a gene
@@ -95,7 +96,33 @@
 	- chr22: CHEK2 SOX10 EP300 XRCC6 BCR
 	-->
 
-	<section id="r-setup" class="slide">
+	<section id="goal" class="slide">
+		<h2>R has a powerful genomic toolbox</h2>
+		<ul>
+			<li>Query annotations like genome sequence, transcript, and array probes</li>
+			<li>Process genomic ranges (from annotations)</li>
+			<li>Store experiment results with annotations and metadata</li>
+		</ul>
+		<p>Plus all the R packages built on the strong foundation:</p>
+		<div class="columns three">
+			<p>Visualization</p>
+			<p>Statistical analysis</p>
+			<p>Dataset import</p>
+		</div>
+	</section>
+
+	<section class="slide">
+		<h2>Get a taste by examples</h2>
+		<ol>
+			<li>Conversion between gene/transcript IDs and symbols</li>
+			<li>Extract and process the genomic location of a gene</li>
+			<li>Plot whole genome/exome sequencing coverage of a gene</li>
+			<li>Query TCGA omics using <code>TCGAbiolinks</code></li>
+		</ol>
+		<p>Check out <a href="#additional-readings">additional readings</a> for a thorough introduction</p>
+	</section>
+
+	<section id="r-setup" class="slide tight">
 		<h2>R setup</h2>
 		<pre class="lang-r">
 <code>install.packages(c(
@@ -103,17 +130,194 @@
 	"BiocManager"  # Bioconductor installer
 ))
 BiocManger::install(c(
-	"ensembldb", "gtrellis", "TCGAbiolinks"
+	"ensembldb", "EnsDb.Hsapiens.v86",
+	"gtrellis", "TCGAbiolinks"
 ))</code>
 		</pre>
 	</section>
 
+	<!-- Example: Find the gene symbol of a txid -->
+	<section class="slide">
+		<h2>Example: Find the gene symbol of a transcript</h2>
+		<p><mark>EnsDb</mark> stores the Ensembl annotation of a specific release of an organism.</p>
+		<pre class="lang-r">
+<code>library(ensembldb)
+library(EnsDb.Hsapiens.v86)
+edb <- EnsDb.Hsapiens.v86</code>
+		</pre>
+	</section>
+
+	<section class="slide tight">
+		<p><code>ensembldb::select()</code> maps the IDs between columns (keytypes). </p>
+		<div class="columns two l60">
+			<pre class="lang-r">
+<code>ensembldb::select(
+    edb,
+    keys = c("ENST00000396884"),
+    keytype = "TXID",
+    columns = c("SYMBOL")
+)
+#              TXID SYMBOL
+# 1 ENST00000396884  SOX10</code>
+			</pre>
+			<pre class="lang-r"><code>keytypes(edb)
+# ENTREZID
+# PROTEINID
+# SEQNAME
+# SYMBOL
+# TXBIOTYPE
+# TXID
+# ...</code></pre>
+		</div>
+	</section>
+
+	<section id="annotaiton-source" class="slide tight">
+		<h2>Annotation sources in Bioconductor</h2>
+		<figure>
+		<table class="striped">
+		<thead>
+			<tr>
+				<th>Object type</th>
+				<th>Example packages</th>
+			</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<th role="row">TxDb</th>
+			<td>
+				<a href="https://bioconductor.org/packages/EnsDb.Hsapiens.v86/">EnsDb.Hsapiens.v86</a>,<br>
+				<a href="http://bioconductor.org/packages/TxDb.Hsapiens.UCSC.hg38.knownGene/">TxDb.Hsapiens.UCSC.hg38.knownGene</a>
+			</td>
+		</tr>
+		<tr>
+			<th role="row">OrgDb</th>
+			<td>
+				<a href="http://bioconductor.org/packages/org.Hs.eg.db/">org.Hs.eg.db</a>
+			</td>
+		</tr>
+		<tr>
+			<th role="row">BSgenome</th>
+			<td>
+				<a href="http://bioconductor.org/packages/BSgenome.Hsapiens.UCSC.hg38/">BSgenome.Hsapiens.UCSC.hg38</a>
+			</td>
+		</tr>
+		<tr>
+			<th role="row">Misc.</th>
+			<td>
+				<a href="http://bioconductor.org/packages/Organism.dplyr/">Organism.dplyr</a>,
+				<a href="http://bioconductor.org/packages/AnnotationHub/">AnnotationHub</a>,
+				<a href="http://bioconductor.org/packages/biomaRt/">biomaRt</a>,<br>
+				all packages under <a href="https://bioconductor.org/packages/release/BiocViews.html#___AnnotationData">AnnotationData</a>
+			</td>
+		</tr>
+		</tbody>
+		</table>
+			<figcaption class="citation right">
+				Ref: Bioconductor annotation workflow&mdash;<a href="https://bioconductor.org/packages/release/workflows/vignettes/annotation/inst/doc/Annotation_Resources.html">Genomic Annotation Resources</a>.
+			</figcaption>
+		</figure>
+		</div>
+	</section>
+
+	<section class="slide">
+		<h2>What about RefSeq transcript ID?</h2>
+		<p>Try another annotation source like <a href="https://bioconductor.org/packages/org.Hs.eg.db/"><code>org.Hs.eg.db</code></a>.</p>
+		<p><a href="https://bioconductor.org/packages/biomaRt/"><code>biomaRt</code></a> can convert IDs between different annotation sources.</p>
+		<p>Use <code>GenomicFeatures::makeTxDbFromGFF</code> to build a new TxDB
+			from <a href="ftp://ftp.ncbi.nlm.nih.gov/refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers/GRCh38_latest_genomic.gff.gz">RefSeq's GFF file</a>.
+			This method applies to all customized GTFs.
+		</p>
+	</section>
+
+	<!-- Example: Find the transcript location -->
+	<section class="slide tight">
+		<h2>Example: Locate my transcript</h2>
+		<pre class="lang-r small">
+			<code>txs <- <mark>transcripts</mark>(edb, columns = c('symbol')); txs
+# GRanges object with 216741 ranges and 1 metadata columns:
+#                   seqnames            ranges strand |      symbol
+#                      &lt;Rle&gt;         &lt;IRanges&gt;  &lt;Rle&gt; | &lt;character&gt;
+#   ENST00000456328        1       11869-14409      + |     DDX11L1
+#   ENST00000450305        1       12010-13670      + |     DDX11L1
+#   ENST00000488147        1       14404-29570      - |      WASH7P
+#               ...      ...               ...    ... .         ...
+#   ENST00000435945        Y 26594851-26634652      - |     PARP4P1
+#   ENST00000435741        Y 26626520-26627159      - |     FAM58CP
+#   ENST00000431853        Y 56855244-56855488      + |     CTBP2P1
+#   -------
+#   seqinfo: 357 sequences from GRCh38 genome</code>
+		</pre>
+		<p class="next">How to read this output? What is a <code>GRanges</code> object?</p>
+	</section>
+
+	<section id="granges-overview" class="slide">
+		<h2><code>GRanges</code> overview</h2>
+		<ul>
+			<li><code>GRanges</code> and <code>GRangesList</code> store genomic ranges in R</li>
+			<li>Provided by <a href="http://bioconductor.org/packages/GenomicRanges/">GenomicRanges</a> package</li>
+			<li>Coordinate system:
+			<ul>
+				<li><strong>1-based</strong>: First base of the chromosome starts with coordinate 1</li>
+				<li><strong>Closed</strong>: Start and end coordinates are included in the range</li>
+				<li><strong>Left-most</strong>: Start &le; end regardless of the strand</li>
+			</ul>
+			</li>
+		</ul>
+	</section>
+
+	<section id="granges-cheatsheet" class="slide tight">
+		<h2><code>GRanges</code> cheatsheet</h2>
+		<figure>
+			<img class="fill w" src="pictures/GRanges_cheatsheet.png" alt="">
+			<figcaption class="citation right">Ref: <a href="http://bioconductor.org/help/course-materials/2015/Uruguay2015/V3-GenomicRanges.html">Genomic Ranges For Genome-Scale Data And Annotation</a>, Martin Morgan, 2015.10</p>
+		</div>
+	</section>
+
+	<section id="granges-example" class="slide tight">
+		<p>Find the location of all SOX10 transcripts:</p>
+		<pre class="lang-r small"><code>txs[txs$symbol == 'SOX10', ]
+# GRanges object with 6 ranges and 1 metadata columns:
+#                   seqnames            ranges strand |      symbol
+#                      &lt;Rle&gt;         &lt;IRanges&gt;  &lt;Rle&gt; | &lt;character&gt;
+#   ENST00000446929       22 37970686-37983414      - |       SOX10
+#   ENST00000396884       22 37972300-37984537      - |       SOX10
+# ...</code></pre>
+		<p>Calculate their promoter region:</p>
+		<pre class="lang-r small"><code>promoters(subset(txs, symbol == 'SOX10'), upstream=2000, downstream=200)
+# GRanges object with 6 ranges and 1 metadata columns:
+#                   seqnames            ranges strand |      symbol
+#                      &lt;Rle&gt;         &lt;IRanges&gt;  &lt;Rle&gt; | &lt;character&gt;
+#   ENST00000446929       22 37983215-37985414      - |       SOX10
+#   ENST00000396884       22 37984338-37986537      - |       SOX10
+# ...
+</code></pre>
+		<style>
+			#granges-example p {
+				margin-bottom: 0.25em;
+			}
+		</style>
+	</section>
+
+	<section class="slide">
+		<h2>GRanges/GRangesList use cases</h2>
+		<ul>
+			<li>Gene model (exons of a transcript)</li>
+			<li>Location of microarray probes and other annotations</li>
+			<li>Store experiment results:<br>
+				sequencing depth, copy number change, ChIP-seq peaks</li>
+		</ul>
+	</section>
+
+	<!-- Example: Plot sequencing depth -->
+
+
+	<!-- Example: TCGAbiolinks to query gene expression of GBM samples -->
 	<section class="slide">
 	  <pre class="lang-r">
 <code>barcodes <- primary_tumors_tbl$barcode
 meth_status_tbl <- primary_tumors_tbl %>%
     select(barcode,
-	      MGMT_promoter = subtype_MGMT.promoter.status)
+	       MGMT_promoter = subtype_MGMT.promoter.status)
 # Subset the gene expression assay
 mgmt_exp_tbl <- assay(gene_exp_se[mgmt_gene_id, barcodes]) %>%
     as_tibble() %>%
@@ -122,8 +326,8 @@ mgmt_exp_tbl <- assay(gene_exp_se[mgmt_gene_id, barcodes]) %>%
 		</pre>
 	</section>
 
-	<section class="slide tight">
-		<h2>Plot MGMT gene expression and its promoter DNA methylation</h2>
+	<section id="gbm-mgmt-fig-code" class="slide tight">
+		<h2>Plot by ggplot2</h2>
 		<pre class="lang-r">
 <code>ggplot(mgmt_exp_tbl,
        aes(x = MGMT_promoter, y = fpkm_uq,
@@ -163,7 +367,7 @@ mgmt_exp_tbl <- assay(gene_exp_se[mgmt_gene_id, barcodes]) %>%
 	</section>
 
 	<!-- Section: Additional readings -->
-	<section class="slide">
+	<section id="additional-readings" class="slide">
 		<h2>Additional readings</h2>
 		<ul>
 			<li><a href="https://www.bioconductor.org/packages/release/workflows/vignettes/annotation/inst/doc/Annotation_Resources.html">Bioconductor Annotation Workflow</a> covers AnnotationHub, OrgDb, TxDb, BSgenome and biomaRt</li>

@@ -67,16 +67,16 @@ mgmt_gene_id <- rowRanges(gene_exp_se) %>%
 ```
 
 ```{r}
-mgmt_exp_tbl <- assay(gene_exp_se[mgmt_gene_id, primary_tumors_tbl$barcode]) %>%
+barcodes <- primary_tumors_tbl$barcode
+meth_status_tbl <- primary_tumors_tbl %>% 
+    select(barcode, MGMT_promoter = subtype_MGMT.promoter.status)
+mgmt_exp_tbl <- assay(gene_exp_se[mgmt_gene_id, barcodes]) %>%
     as_tibble() %>%
     gather(barcode, mgmt_fpkm_uq) %>%
-    left_join(
-        primary_tumors_tbl %>% select(barcode, MGMT_promoter=subtype_MGMT.promoter.status),
-        by = 'barcode'
-    )
+    left_join(meth_status_tbl, by = 'barcode')
 ```
 
-```{r, fig.width=5, fig.height=5}
+```{r, fig.width=7, fig.height=5}
 ggplot(mgmt_exp_tbl, aes(x = MGMT_promoter, y = mgmt_fpkm_uq, fill = MGMT_promoter)) + 
     scale_y_log10(labels = scales::comma) +
     geom_violin(draw_quantiles = .50) + 
@@ -84,9 +84,9 @@ ggplot(mgmt_exp_tbl, aes(x = MGMT_promoter, y = mgmt_fpkm_uq, fill = MGMT_promot
     theme_bw() + 
     theme(legend.justification = c(0, 1), legend.position = c(0.01, .99)) + 
     labs(tiele = 'TCGA GBM MGMT methylation and gene expression',
-         x = 'MGMT promter DNA methylation', y = 'FPKM UQ')
+         x = 'MGMT promter DNA methylation', y = 'MGMT FPKM UQ')
 
-ggsave('mgmt_promoter.png', width = 5, height = 5)
+ggsave('../pictures/mgmt_promoter.png', width = 7, height = 5)
 ```
 
 
