@@ -168,8 +168,11 @@
 	-->
 	<script>
 		document.addEventListener('DOMContentLoaded', (event) => {
+			hljs.configure({
+				tabReplace: '    '
+			});
 			// Highlight only the code blocks with specified language
-			document.querySelectorAll('pre[class^="language"] code').forEach((block) => {
+			document.querySelectorAll('pre[class^="lang"] code').forEach((block) => {
 				hljs.highlightBlock(block);
 			});
 
