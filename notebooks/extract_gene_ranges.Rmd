@@ -1,0 +1,76 @@
+---
+title: "Extract gene ranges"
+output: html_notebook
+---
+
+```{r, message=FALSE}
+library(tidyverse)
+library(GenomicRanges)
+library(ensembldb)
+library(rtracklayer)
+```
+
+```{r}
+edb <- EnsDb('~/Documents/EnsDb.Hsapiens.v95.sqlite')
+seqlevelsStyle(edb) <- 'UCSC'
+```
+
+```{r}
+genes_of_interest <- c(
+    'CHEK2',
+    'SOX10',
+    'EP300',
+    'XRCC6',
+    'BCR'
+)
+```
+
+```{r}
+genes_gr <- genes(
+    edb, 
+    filter = ~ gene_name %in% genes_of_interest & 
+        gene_biotype != 'LRG_gene',
+    columns = c('gene_id_version')
+)
+genes_gr
+```
+
+```{r}
+extended_roi <- genes_gr + 5000
+extended_roi
+```
+
+```{r}
+depth_beds <- tibble(pth = list.files('../data/mosdepth_out', full.names = TRUE)) %>%
+    mutate(
+        sample_type = str_match(pth, '([^/.]+).per-base.bed.gz$')[, 2]
+    )
+
+bed_grs <- depth_beds$pth %>% 
+    map(~ import.bedGraph(.x, seqinfo = seqinfo(extended_roi)))
+```
+
+
+```{r}
+bed_grs %>% map(length)
+```
+
+```{r}
+subset_bed_grs <- bed_grs %>%
+    purrr:::map(~ subsetByOverlaps(.x, extended_roi))
+
+subset_bed_grs %>%
+    map(length)
+
+depth_beds$subset_bed_grs <- subset_bed_grs
+```
+
+```{r}
+depth_beds %>%
+    purrr:::pmap(function(sample_type, subset_bed_grs, ...) {
+        out_bed_pth = str_interp('../data/${sample_type}.subset.bed')
+        subset_bed_grs %>%
+            export.bedGraph(out_bed_pth)
+    })
+```
+
