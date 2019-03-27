@@ -422,6 +422,16 @@ mgmt_exp_tbl <- assay(gene_exp_se[mgmt_gene_id, barcodes]) %>%
 	theme_bw()</code>
 		</pre>
 	</section>
+	-->
+
+	<section id="tcgabiolinks" class="slide tight">
+		<h2>Extra example: Access TCGA data by <a href="http://bioconductor.org/packages/TCGAbiolinks/">TCGAbiolinks</a></h2>
+		<p>Visualize the relationship between DNA methylation of MGMT promoter and its gene expression.</p>
+		<ul>
+			<li>Query the gene expression of TCGA GBM primary tumors and store it as a <code>SummarizedExperiment</code> object</li>
+			<li>Use the sample information in <code>colData()</code> to stratify GBM samples by their MGMT methylation status</li>
+		</ul>
+	</section>
 
 	<section id="gbm-mgmt-fig" class="slide">
 		<img class="place c" src="pictures/mgmt_promoter.png" alt="">
@@ -431,7 +441,6 @@ mgmt_exp_tbl <- assay(gene_exp_se[mgmt_gene_id, barcodes]) %>%
 			}
 		</style>
 	</section>
-	-->
 
 	<!-- Ending Slide -->
 	<section id='end' class='slide clear black'>
