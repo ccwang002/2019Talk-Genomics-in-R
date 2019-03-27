@@ -108,6 +108,42 @@ BiocManger::install(c(
 		</pre>
 	</section>
 
+	<section class="slide">
+	  <pre class="lang-r">
+<code>barcodes <- primary_tumors_tbl$barcode
+meth_status_tbl <- primary_tumors_tbl %>%
+    select(barcode,
+	      MGMT_promoter = subtype_MGMT.promoter.status)
+# Subset the gene expression assay
+mgmt_exp_tbl <- assay(gene_exp_se[mgmt_gene_id, barcodes]) %>%
+    as_tibble() %>%
+    gather(barcode, fpkm_uq) %>%
+    left_join(meth_status_tbl, by = 'barcode')</code>
+		</pre>
+	</section>
+
+	<section class="slide tight">
+		<h2>Plot MGMT gene expression and its promoter DNA methylation</h2>
+		<pre class="lang-r">
+<code>ggplot(mgmt_exp_tbl,
+       aes(x = MGMT_promoter, y = fpkm_uq,
+           fill = MGMT_promoter)) +
+    scale_y_log10(labels = scales::comma) +
+    geom_violin(draw_quantiles = .50) +
+    geom_quasirandom() +  # Require ggbeeswarm package
+	theme_bw()</code>
+		</pre>
+	</section>
+
+	<section id="gbm-mgmt-fig" class="slide">
+		<img class="place c" src="pictures/mgmt_promoter.png" alt="">
+		<style>
+			#gbm-mgmt-fig img {
+				height: 95%;
+			}
+		</style>
+	</section>
+
 	<!-- Ending Slide -->
 	<section id='end' class='slide clear black'>
 		<h2>Thank you</h2>

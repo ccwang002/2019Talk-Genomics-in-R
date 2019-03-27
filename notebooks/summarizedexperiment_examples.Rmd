@@ -1,0 +1,92 @@
+---
+title: "SummarizedExperiment Examples"
+output: html_notebook
+---
+
+```{r, message=FALSE}
+library(TCGAbiolinks)
+library(SummarizedExperiment)
+library(tidyverse)
+library(ggbeeswarm)
+```
+
+```{r}
+PROJECT <- 'TCGA-GBM'
+```
+
+```{r}
+TCGAbiolinks:::getProjectSummary(PROJECT)$data_categories
+```
+
+```{r, message=FALSE}
+gene_exp_query <- GDCquery(
+    project = 'TCGA-GBM',
+    data.category = 'Transcriptome Profiling',
+    workflow.type = 'HTSeq - FPKM-UQ',
+    access = 'open'
+)
+```
+
+```{r}
+getResults(gene_exp_query) %>% nrow()
+```
+
+Only for the first time, download the data from GDC
+```
+GDCdownload(gene_exp_query)
+```
+
+```{r}
+gene_exp_se <- GDCprepare(gene_exp_query)
+```
+
+```{r}
+col_tbl <- colData(gene_exp_se) %>% 
+    as_tibble()
+col_tbl %>% head()
+```
+
+```{r}
+col_tbl %>%
+    dplyr::count(shortLetterCode, definition)
+```
+
+```{r}
+primary_tumors_tbl <- col_tbl %>%
+    filter(shortLetterCode == 'TP',
+           subtype_IDH.codel.subtype == 'IDHwt',
+           !is.na(subtype_MGMT.promoter.status))
+
+primary_tumors_tbl %>% dplyr::count(subtype_MGMT.promoter.status)
+```
+
+```{r}
+mgmt_gene_id <- rowRanges(gene_exp_se) %>%
+    subset(external_gene_name == 'MGMT') %>%
+    names()
+```
+
+```{r}
+mgmt_exp_tbl <- assay(gene_exp_se[mgmt_gene_id, primary_tumors_tbl$barcode]) %>%
+    as_tibble() %>%
+    gather(barcode, mgmt_fpkm_uq) %>%
+    left_join(
+        primary_tumors_tbl %>% select(barcode, MGMT_promoter=subtype_MGMT.promoter.status),
+        by = 'barcode'
+    )
+```
+
+```{r, fig.width=5, fig.height=5}
+ggplot(mgmt_exp_tbl, aes(x = MGMT_promoter, y = mgmt_fpkm_uq, fill = MGMT_promoter)) + 
+    scale_y_log10(labels = scales::comma) +
+    geom_violin(draw_quantiles = .50) + 
+    geom_quasirandom() + 
+    theme_bw() + 
+    theme(legend.justification = c(0, 1), legend.position = c(0.01, .99)) + 
+    labs(tiele = 'TCGA GBM MGMT methylation and gene expression',
+         x = 'MGMT promter DNA methylation', y = 'FPKM UQ')
+
+ggsave('mgmt_promoter.png', width = 5, height = 5)
+```
+
+
