@@ -88,10 +88,25 @@
 			- gtrellis
 		- Gene expression / CNV of the whole cohort
 			- SummarizedExperiment
+			- Using airway dataset as demo
+			- TCGAbiolinks for all harmonized and legacy TCGA data
 	- R ecosystem for genomic analysis
 	Example DNA WXS BAM
 	- chr22: CHEK2 SOX10 EP300 XRCC6 BCR
 	-->
+
+	<section id="r-setup" class="slide">
+		<h2>R setup</h2>
+		<pre class="lang-r">
+<code>install.packages(c(
+	"tidyverse",   # dplyr, ggplot2, tibble, stringr, ...
+	"BiocManager"  # Bioconductor installer
+))
+BiocManger::install(c(
+	"ensembldb", "gtrellis", "TCGAbiolinks"
+))</code>
+		</pre>
+	</section>
 
 	<!-- Ending Slide -->
 	<section id='end' class='slide clear black'>
@@ -168,6 +183,7 @@
 	-->
 	<script>
 		document.addEventListener('DOMContentLoaded', (event) => {
+			// Convert tab to be 4 space in the code examples
 			hljs.configure({
 				tabReplace: '    '
 			});
