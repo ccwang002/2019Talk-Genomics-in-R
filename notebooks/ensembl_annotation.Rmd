@@ -1,0 +1,38 @@
+---
+title: "Annotation"
+output: html_notebook
+---
+
+```{r, message=FALSE}
+library(ensembldb)
+library(EnsDb.Hsapiens.v86)
+library(tidyverse)
+```
+
+```{r}
+edb <- EnsDb.Hsapiens.v86
+```
+
+```{r}
+ensembldb::select(
+    edb,
+    keys = c("ENST00000396884"),
+    keytype = "TXID",
+    columns = c("SYMBOL")
+)
+```
+
+```{r}
+ensembldb::select(
+    edb,
+    keys = c("SOX10"),
+    keytype = "SYMBOL",
+    columns = c("TXID")
+)
+```
+
+```{r}
+txs <- transcripts(edb)
+txs
+```
+

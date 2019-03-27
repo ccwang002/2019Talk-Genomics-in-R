@@ -34,10 +34,12 @@ getResults(gene_exp_query) %>% nrow()
 Only for the first time, download the data from GDC
 ```
 GDCdownload(gene_exp_query)
+gene_exp_se <- GDCprepare(gene_exp_query, directory = '../data/GDCdata')
+saveRDS(gene_exp_se, '../data/tcga_gbm_gene_exp.rds')
 ```
 
 ```{r}
-gene_exp_se <- GDCprepare(gene_exp_query)
+gene_exp_se <- readRDS('../data/tcga_gbm_gene_exp.rds')
 ```
 
 ```{r}

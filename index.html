@@ -117,7 +117,7 @@
 			<li>Conversion between gene/transcript IDs and symbols</li>
 			<li>Extract and process the genomic location of a gene</li>
 			<li>Plot whole genome/exome sequencing coverage of a gene</li>
-			<li>Query TCGA omics using <code>TCGAbiolinks</code></li>
+			<li><del>Query TCGA omics using <code>TCGAbiolinks</code></del></li>
 		</ol>
 		<p>Check out <a href="#additional-readings">additional readings</a> for a thorough introduction</p>
 	</section>
@@ -309,9 +309,93 @@ edb <- EnsDb.Hsapiens.v86</code>
 	</section>
 
 	<!-- Example: Plot sequencing depth -->
+	<section class="slide">
+		<h2>Example: Plot the whole exome sequencing depth around SOX10</h2>
+		<pre class="lang-r"><code>library(rtracklayer)
+library(GenomicRanges)
+library(gtrellis)
+library(EnsDb.Hsapiens.v86)
+library(tidyverse)</code></pre>
+	</section>
 
+	<section class="slide">
+		<pre class="lang-r small"><code># Read sequencing depth BED file as a GRanges object
+seq_depth_gr <- import.bedGraph('wxs_normal.subset.bed.gz')
+# GRanges object with 76574 ranges and 1 metadata column:
+#           seqnames            ranges strand |     score
+#       [1]    chr22 23174700-23174716      * |         1
+#       [2]    chr22 23174717-23174725      * |         2
+#       [3]    chr22 23174726-23174735      * |         3
+# ...
+
+# Find the genomic range of SOX10
+edb <- EnsDb.Hsapiens.v86
+seqlevelsStyle(edb) <- 'UCSC'
+sox10_region <- range(transcripts(edb, filter = ~ symbol == 'SOX10')) + 500
+# GRanges object with 1 range and 0 metadata columns:
+#       seqnames            ranges strand
+#   [1]    chr22 37970186-37987922      -
+</code></pre>
+	</section>
+
+	<section class="slide tight">
+		<p>Finally, use <a href="http://bioconductor.org/packages/gtrellis/">gtrellis</a> to plot. gtrellis visualizes tracks of data using chromosomes as x-axis.
+			Useful for CNV, sequencing depths, DNA methylation, and etc.</p>
+		<pre class="lang-r small"><code>gtrellis_layout(
+    data = sox10_region,  # specify the genomic region of interest
+    track_ylim = c(0, 750)
+)
+
+# Add the track for WXS sequencing depth
+add_lines_track(
+    seq_depth_gr,
+    seq_depth_gr$score,
+    area = TRUE,
+    gp = gpar(fill = "gray", col = NA)
+)</code></pre>
+	</section>
+
+	<section class="slide tight">
+		<img class="fill w" src="pictures/seq_depth.png" alt="">
+	</section>
+
+	<!-- SummarizedExperiment -->
+	<section id="summarizedexperiment-overview" class="slide tight">
+		<h2>Store -omics data with its metadata</h2>
+		<div class="columns two">
+			<div>
+				<ul>
+					<li>Keep measurements of all samples with annotations, sample info, and metadata</li>
+					<li>Use cases: gene expression, microarray data</li>
+					<li><a href="https://bioconductor.org/packages/SummarizedExperiment/">SummarizedExperiment</a> provides <code>SummarizedExperiment</code> and <code>RangedSummarizedExperiment</code></li>
+				</ul>
+			</div>
+			<figure>
+				<img class="fill w" src="pictures/summarizedexperiment_overview.svg" alt="">
+				<figcaption class="citation right">
+					Ref: <a href="https://bioconductor.org/packages/release/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html">SummarizedExperiment's vignette</a>
+				</figcaption>
+			</figure>
+		</div>
+		<style>
+			#summarizedexperiment-overview .columns {
+				grid-column-gap: 2em;
+			}
+		</style>
+	</section>
+
+	<section id="summary" class="slide">
+		<h2>Summary</h2>
+		<ul>
+			<li>Query various annotations by R using <code>TxDb</code> and <code>EnsDB</code></li>
+			<li>Store genomic ranges by <code>GRanges</code> and <code>GRangesList</code></li>
+			<li>Plot data tracks along genome by <code>gtrellis</code></li>
+			<li>Store multi-sample experiments by <code>SummarizedExperiment</code></li>
+		</ul>
+	</section>
 
 	<!-- Example: TCGAbiolinks to query gene expression of GBM samples -->
+	<!--
 	<section class="slide">
 	  <pre class="lang-r">
 <code>barcodes <- primary_tumors_tbl$barcode
@@ -347,6 +431,7 @@ mgmt_exp_tbl <- assay(gene_exp_se[mgmt_gene_id, barcodes]) %>%
 			}
 		</style>
 	</section>
+	-->
 
 	<!-- Ending Slide -->
 	<section id='end' class='slide clear black'>
